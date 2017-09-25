@@ -1,12 +1,12 @@
 package com.takeaway.gameofthree.server.controller;
 
-import java.net.SocketException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -31,14 +31,15 @@ public class ServerController {
 	private static final int MAX_QUANTITY_PLAYERS = 2;
 	private static final int LIMIT_NUMBER = 100;
 
+	@Autowired
 	private RestTemplate restTemplate;
+	
 	private List<Player> queue;
 	private Iterator<Player> iteratorPlayer;
 
 	private boolean GAME_STARTED = false;
 
 	public ServerController() {
-		restTemplate = new RestTemplate();
 		queue = new ArrayList<>();
 	}
 
@@ -79,6 +80,7 @@ public class ServerController {
 		restTemplate
 				.delete(player.getUrl() + "/disconnect");
 		} catch (Exception e){
+			e.printStackTrace();
 			logger.warn(e.getMessage());
 		}
 

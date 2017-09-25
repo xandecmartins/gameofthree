@@ -1,6 +1,6 @@
 package com.takeaway.gameofthree.player.strategies;
 
-public class SmartStrategy implements GameStrategy{
+public class SmartStrategyImpl implements GameStrategy{
 
 	@Override
 	public int executeStrategy(int number) {
