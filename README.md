@@ -1,10 +1,10 @@
 # Description
     
-    This project is implementation of the chalenge "Game of Three"
+    This project is an implementation of the chalenge "Game of Three"
 
 # Architecture
 
-    There are two modules
+    There are two modules. First the serve must be started to receive players for registration. However, there is a limit of two players. It is possible to change this, to do it, you have to update the Application.properties in the server module.
 
  ## Server
  
@@ -26,14 +26,42 @@
     mvn package
    
   ## Run
-  
+    
+    * Server  
     java -jar server/target/server.jar
     
+    * Player 1
     java -jar player/target/player.jar
+    
+    * Player 2
     java -jar player/target/player.jar
     
     Access your browse on address http://localhost:8080/server
     
+    The links of players will be available on the server page.
+    
+# API Rest
+
+    ## Server 
+        * GET http://localhost:8080/server/api/player 
+            + Return the player list
+        * GET http://localhost:8080/server/api/player/{id} 
+            + Return a player by id
+        * DELETE http://localhost:8080/server/api/player/{id}
+            + Delete a player
+        * GET http://localhost:8080/server/api/start/player/{id}
+            + Receive the ask to start a game from player
+        * GET http://localhost:8080/server/api/register/{ip}/{port}
+            + Receive the request to register a new player
+        * GET http://localhost:8080/server/api/start
+            + Start a new game, using the fisrt registred player to begin
+        * GET http://localhost:8080/server/api/play/{number}/player/{id}
+            + Receive a number from a player to send for another player
+        
+        
+    ## Player
+    
+  
 # Main Features
 
     * Backend and Frontend implemented
