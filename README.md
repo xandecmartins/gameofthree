@@ -27,10 +27,10 @@
    
   ## Run
   
-    java -jar target/server.jar
+    java -jar server/target/server.jar
     
-    java -jar target/player.jar
-    java -jar target/player.jar
+    java -jar player/target/player.jar
+    java -jar player/target/player.jar
     
     Access your browse on address http://localhost:8080/server
     
