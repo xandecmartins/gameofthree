@@ -4,17 +4,19 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
+import org.springframework.beans.factory.annotation.Autowired;
+
 import com.takeaway.gameofthree.domain.Player;
+import com.takeaway.gameofthree.server.AppProperties;
 import com.takeaway.gameofthree.util.Generator;
 
 public class PlayerServiceImpl implements PlayerService {
 
-	private static final int MIN_QUANTITY_PLAYERS = 2;
-	
-	private static final int MAX_QUANTITY_PLAYERS = 2;
-	
+	@Autowired
+	private AppProperties properties;
+
 	private boolean gameStarted;
-	
+
 	private List<Player> queue;
 	private Iterator<Player> iteratorGame;
 
@@ -78,10 +80,10 @@ public class PlayerServiceImpl implements PlayerService {
 	public Player retrieveNextPlayer() {
 		return iteratorGame.next();
 	}
-	
+
 	public boolean isGameReady() {
 		boolean retVal = false;
-		if (queue.size() >= MIN_QUANTITY_PLAYERS) {
+		if (queue.size() >= properties.getMinUsers()) {
 			retVal = true;
 		}
 		return retVal;
@@ -89,7 +91,7 @@ public class PlayerServiceImpl implements PlayerService {
 
 	public boolean isGameFull() {
 		boolean retVal = false;
-		if (queue.size() == MAX_QUANTITY_PLAYERS) {
+		if (queue.size() == properties.getMaxUsers()) {
 			retVal = true;
 		}
 		return retVal;
@@ -102,34 +104,24 @@ public class PlayerServiceImpl implements PlayerService {
 	public void setGameStarted(boolean gameStarted) {
 		this.gameStarted = gameStarted;
 	}
-	
-	public String register(String ip, int port){
-		String retVal;
-		if (isGameStarted()) {
-			retVal = "The game has started, new players are not allowed!";
-		} else if (isGameFull()) {
-			retVal = "Number of players exceed";
-		} else {
-			Player player = new Player(Generator.getId(), ip, port);
-			add(player);
-			retVal = "player " + player.getId();
-		}
-		return retVal;
+
+	public Player register(String ip, int port) {
+		Player player = new Player(Generator.getId(), ip, port);
+		add(player);
+		return player;
 	}
 
 	public Player startGame(int id) {
 		setGameStarted(Boolean.TRUE);
 		adjustPositionGame(id);
 		return renewRound();
-		
+
 	}
-	
+
 	public Player startGame() {
 		setGameStarted(Boolean.TRUE);
 		return renewRound();
-		
+
 	}
-	
-	
 
 }

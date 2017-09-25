@@ -30,7 +30,7 @@ public interface PlayerService {
 
 	void setGameStarted(boolean gameStarted);
 
-	String register(String ip, int port);
+	Player register(String ip, int port);
 	
 	Player startGame(int id);
 	

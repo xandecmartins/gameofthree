@@ -16,6 +16,7 @@ import org.springframework.web.client.RestTemplate;
 
 import com.takeaway.gameofthree.domain.Player;
 import com.takeaway.gameofthree.domain.Status;
+import com.takeaway.gameofthree.server.AppProperties;
 import com.takeaway.gameofthree.server.service.PlayerService;
 
 @RestController
@@ -25,8 +26,9 @@ public class ServerController {
 	public static final Logger logger = LoggerFactory
 			.getLogger(ServerController.class);
 
-	private static final int LIMIT_NUMBER = 100;
-
+	@Autowired
+	private AppProperties properties;
+	
 	@Autowired
 	private RestTemplate restTemplate;
 
@@ -72,19 +74,26 @@ public class ServerController {
 			Player player = playerService.startGame(id);
 
 			restTemplate.getForObject(player.getUrl() + "/begin/{bound}",
-					Integer.class, LIMIT_NUMBER);
+					Integer.class, properties.getLimitValue());
 		} else {
 			logger.info("The amount of users is not enough to start");
-			return new ResponseEntity<String>("The amount of users is not enough to start",HttpStatus.ACCEPTED);
+			return new ResponseEntity<String>("The amount of users is not enough to start",HttpStatus.UNAUTHORIZED);
 		}
 		return new ResponseEntity<String>("The was started with sucess!",HttpStatus.ACCEPTED);
 	}
 
 	@RequestMapping(value = "/register/{ip}/{port}", method = RequestMethod.GET)
-	public String register(@PathVariable("ip") final String ip,
+	public ResponseEntity<?> register(@PathVariable("ip") final String ip,
 			@PathVariable("port") final int port) {
 		logger.debug("Receiving new player..." + ip + " - " + port);
-		return playerService.register(ip, port);
+		
+		if (playerService.isGameStarted()) {
+			return new ResponseEntity<String>("The game has started, new players are not allowed!",HttpStatus.UNAUTHORIZED);
+		} else if (playerService.isGameFull()) {
+			return new ResponseEntity<String>("Number of players exceed",HttpStatus.UNAUTHORIZED);
+		} else {
+			return new ResponseEntity<Player>(playerService.register(ip, port), HttpStatus.OK); 
+		}
 	}
 
 	@RequestMapping(value = "/start", method = RequestMethod.GET)
@@ -96,10 +105,10 @@ public class ServerController {
 
 			Player player = playerService.startGame();
 			restTemplate.getForObject(player.getUrl() + "/begin/{bound}",
-					Integer.class, LIMIT_NUMBER);
+					Integer.class, properties.getLimitValue());
 		} else {
 			logger.info("The amount of users is not enough to start");
-			return new ResponseEntity<String>("The amount of users is not enough to start",HttpStatus.ACCEPTED);
+			return new ResponseEntity<String>("The amount of users is not enough to start",HttpStatus.UNAUTHORIZED);
 		}
 		
 		return new ResponseEntity<Player>(HttpStatus.NO_CONTENT);
@@ -119,12 +128,14 @@ public class ServerController {
 
 		// Simulate the time to view results
 		try {
-			Thread.sleep(2000);
+			Thread.sleep(properties.getPlayDelay());
 		} catch (InterruptedException e) {
-			e.printStackTrace();
+			logger.error("Eror during sleeping", e);
 		}
 
 		if (number == 1) {
+			playerService.setGameStarted(Boolean.FALSE);
+			System.out.println(playerService.isGameStarted());
 			declareFinalResult(id);
 			logger.info("Game is over!");
 			return new ResponseEntity<String>("Game is over!",HttpStatus.ACCEPTED);
@@ -159,8 +170,8 @@ public class ServerController {
 		List<Player> queue = playerService.findAll();
 		for (Player player : queue) {
 			player.setStatus(Status.READY);
-			restTemplate.getForObject(player.getUrl() + "/newStatus/{status}",
-					Integer.class, Status.WINNER);
+			restTemplate.getForObject(player.getUrl() + "/newStatus/{status}/currentNumber/{currentNumber}",
+					Integer.class, Status.READY, 0);
 		}
 	}
 	

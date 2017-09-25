@@ -16,6 +16,9 @@ public class Player {
 	
 	private boolean haveNewValue;
 	
+	public Player() {
+	}
+	
 	public Player(int id, String ip, int port) {
 		this.id = id;
 		this.status = Status.READY;
@@ -64,6 +67,11 @@ public class Player {
 
 	public void setPort(int port) {
 		this.port = port;
+	}
+	
+	public String getUrl(){
+		return "http://" + this.ip + ":"
+				+ this.port+"/player/api";
 	}
 	
 	public boolean isAutonomous() {

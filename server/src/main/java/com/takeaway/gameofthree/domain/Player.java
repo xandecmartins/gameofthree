@@ -13,11 +13,20 @@ public class Player {
 	
 	private int port;
 	
+	private boolean autonomous;
+	
+	private boolean haveNewValue;
+	
+	public Player() {
+	}
+	
 	public Player(int id, String ip, int port) {
 		this.id = id;
 		this.status = Status.READY;
 		this.ip = ip;
 		this.port = port;
+		this.autonomous = true;
+		this.haveNewValue = false;
 	
 	}
 
@@ -66,4 +75,23 @@ public class Player {
 				+ this.port+"/player/api";
 	}
 	
+	public boolean isAutonomous() {
+		return autonomous;
+	}
+	
+	public boolean getAutonomous() {
+		return autonomous;
+	}
+
+	public void setAutonomous(boolean autonomous) {
+		this.autonomous = autonomous;
+	}
+
+	public boolean isHaveNewValue() {
+		return haveNewValue;
+	}
+
+	public void setHaveNewValue(boolean haveNewValue) {
+		this.haveNewValue = haveNewValue;
+	}
 }

@@ -52,7 +52,7 @@ angular.module('g3').controller('PlayerController',
         	
          };
         $scope.reload();
-        $interval($scope.reload, 1000);
+        $interval($scope.reload, 500);
     }
 
     ]);
