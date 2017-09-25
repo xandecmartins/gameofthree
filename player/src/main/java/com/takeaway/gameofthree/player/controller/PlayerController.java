@@ -42,24 +42,24 @@ public class PlayerController {
 		return player;
 	}
 
-	@RequestMapping(value = "/finalResult/{status}", method = RequestMethod.GET)
+	@RequestMapping(value = "/newStatus/{status}", method = RequestMethod.GET)
 	public void receiveFinalResult(@PathVariable final Status status) {
 		player.setStatus(status);
 	}
 
 	@RequestMapping(value = "/receive/{number}", method = RequestMethod.GET)
 	public void receive(@PathVariable final int number) {
-		logger.debug("Receiving number " + number);
+		logger.info("Receiving number " + number);
 		player.setCurrentNumber(number);
 		player.setHaveNewValue(true);
 		if (player.isAutonomous()) {
 			int newNumber = strategy.executeStrategy(number);
 
 			player.setCurrentNumber(newNumber);
-			logger.debug("new number " + newNumber);
+			logger.info("new number " + newNumber);
 
 			if (newNumber == 1) {
-				logger.debug("I won");
+				logger.info("I won");
 			}
 
 			restTemplate.getForObject(
@@ -78,21 +78,21 @@ public class PlayerController {
 
 	@RequestMapping(value = "/askToStart", method = RequestMethod.GET)
 	public void startGame() {
-		logger.debug("try to start new game");
+		logger.info("try to start new game");
 		serverResponse = restTemplate.getForObject(
 				NetUtil.getURLServer("/start"), String.class);
-		logger.debug(serverResponse);
+		logger.info(serverResponse);
 	}
 
 	@RequestMapping(value = "/update/{autonomous}", method = RequestMethod.GET)
 	public void updatePlayer(@PathVariable final boolean autonomous) {
-		logger.debug("updating user to autonomous " + autonomous);
+		logger.info("updating user to autonomous " + autonomous);
 		player.setAutonomous(autonomous);
 	}
 
 	@RequestMapping(value = "/startNewValue", method = RequestMethod.GET)
 	public void startNewValue() {
-		logger.debug("starting new value");
+		logger.info("starting new value");
 		player.setHaveNewValue(false);
 	}
 
@@ -100,11 +100,11 @@ public class PlayerController {
 	public void begin(@PathVariable final int bound) {
 		int fisrtNumber = new Random().nextInt(bound);
 		player.setCurrentNumber(fisrtNumber);
-		logger.debug("First number " + fisrtNumber);
+		logger.info("First number " + fisrtNumber);
 		serverResponse = restTemplate.getForObject(
 				NetUtil.getURLServer("/play/{number}/player/{id}"),
 				String.class, fisrtNumber, player.getId());
-		logger.debug(serverResponse);
+		logger.info(serverResponse);
 
 	}
 

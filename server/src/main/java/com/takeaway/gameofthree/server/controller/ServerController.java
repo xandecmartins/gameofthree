@@ -1,7 +1,5 @@
 package com.takeaway.gameofthree.server.controller;
 
-import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 import org.slf4j.Logger;
@@ -18,7 +16,7 @@ import org.springframework.web.client.RestTemplate;
 
 import com.takeaway.gameofthree.domain.Player;
 import com.takeaway.gameofthree.domain.Status;
-import com.takeaway.gameofthree.util.Generator;
+import com.takeaway.gameofthree.server.service.PlayerService;
 
 @RestController
 @RequestMapping("/api")
@@ -27,27 +25,20 @@ public class ServerController {
 	public static final Logger logger = LoggerFactory
 			.getLogger(ServerController.class);
 
-	private static final int MIN_QUANTITY_PLAYERS = 2;
-	private static final int MAX_QUANTITY_PLAYERS = 2;
 	private static final int LIMIT_NUMBER = 100;
 
 	@Autowired
 	private RestTemplate restTemplate;
-	
-	private List<Player> queue;
-	private Iterator<Player> iteratorPlayer;
 
-	private boolean GAME_STARTED = false;
+	@Autowired
+	private PlayerService playerService;
 
-	public ServerController() {
-		queue = new ArrayList<>();
-	}
-
+	@SuppressWarnings({ "rawtypes", "unchecked" })
 	@RequestMapping(value = "/player/", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
 	public ResponseEntity<List<Player>> listAllPlayers() {
+		List<Player> queue = playerService.findAll();
 		if (queue.isEmpty()) {
 			return new ResponseEntity(HttpStatus.NO_CONTENT);
-			// You many decide to return HttpStatus.NOT_FOUND
 		}
 		return new ResponseEntity<List<Player>>(queue, HttpStatus.OK);
 	}
@@ -55,176 +46,122 @@ public class ServerController {
 	@RequestMapping(value = "/player/{id}", method = RequestMethod.GET)
 	public ResponseEntity<?> getUser(@PathVariable("id") int id) {
 		logger.info("Fetching Player with id {}", id);
-		Player player = getPlayer(id);
-		if (player == null) {
-			logger.error("User with id {} not found.", id);
-			return new ResponseEntity("User with id " + id + " not found",
-					HttpStatus.NOT_FOUND);
-		}
-		return new ResponseEntity<Player>(player, HttpStatus.OK);
+		return new ResponseEntity<Player>(playerService.findById(id),
+				HttpStatus.OK);
 	}
 
 	@RequestMapping(value = "/player/{id}", method = RequestMethod.DELETE)
 	public ResponseEntity<?> deletePlayer(@PathVariable("id") int id) {
 		logger.info("Fetching & Deleting User with id {}", id);
 
-		Player player = getPlayer(id);
-		if (player == null) {
-			logger.error("Unable to delete. User with id {} not found.", id);
-			return new ResponseEntity("Unable to delete. User with id " + id
-					+ " not found.", HttpStatus.NOT_FOUND);
-		}
+		Player player = playerService.findById(id);
+		playerService.remove(id);
 
-		removePlayer(id);
-		try{
-		restTemplate
-				.delete(player.getUrl() + "/disconnect");
-		} catch (Exception e){
-			e.printStackTrace();
-			logger.warn(e.getMessage());
-		}
+		restTemplate.delete(player.getUrl() + "/disconnect");
 
-		return new ResponseEntity<Player>(HttpStatus.NO_CONTENT);
+		return new ResponseEntity<String>("the player was deleted",HttpStatus.NO_CONTENT);
 	}
 
-	@RequestMapping(value = "/player/start/{id}", method = RequestMethod.GET)
+	@RequestMapping(value = "/start/player/{id}", method = RequestMethod.GET)
 	public ResponseEntity<?> startGamePlayer(@PathVariable("id") int id) {
 		logger.info("Fetching & startingUser with id {}", id);
 
-		Player player = null;
-		iteratorPlayer = queue.iterator();
-		while (iteratorPlayer.hasNext()) {
-			player = iteratorPlayer.next();
-			if (player.getId() == id) {
-				break;
-			}
-		}
-		if (player == null) {
-			logger.error("Unable to start, Player with id {} not found.", id);
-			return new ResponseEntity("Unable to delete. User with id " + id
-					+ " not found.", HttpStatus.NOT_FOUND);
-		}
+		if (playerService.isGameReady()) {
+			renewRemoteStatus();
 
-		restTemplate.getForObject(player.getUrl() + "/begin/{bound}",
-				Integer.class, LIMIT_NUMBER);
+			Player player = playerService.startGame(id);
 
-		return new ResponseEntity<Player>(HttpStatus.NO_CONTENT);
+			restTemplate.getForObject(player.getUrl() + "/begin/{bound}",
+					Integer.class, LIMIT_NUMBER);
+		} else {
+			logger.info("The amount of users is not enough to start");
+			return new ResponseEntity<String>("The amount of users is not enough to start",HttpStatus.ACCEPTED);
+		}
+		return new ResponseEntity<String>("The was started with sucess!",HttpStatus.ACCEPTED);
 	}
 
 	@RequestMapping(value = "/register/{ip}/{port}", method = RequestMethod.GET)
 	public String register(@PathVariable("ip") final String ip,
 			@PathVariable("port") final int port) {
-		logger.debug("Receiving new player...");
-		String retVal;
-
-		if (GAME_STARTED) {
-			retVal = "The game has started, new players are not allowed!";
-		} else if (isGameFull()) {
-			retVal = "Number of players exceed";
-		} else {
-			Player player = new Player(Generator.getId(), ip, port);
-			queue.add(player);
-			retVal = "player " + player.getId();
-			logger.info("Player " + player.getId() + " received...");
-		}
-
-		return retVal;
+		logger.debug("Receiving new player..." + ip + " - " + port);
+		return playerService.register(ip, port);
 	}
 
 	@RequestMapping(value = "/start", method = RequestMethod.GET)
-	public void startGame() {
+	public ResponseEntity<?> startGame() {
 		logger.info("starting new game");
-		if (isGameReady()) {
-			GAME_STARTED = Boolean.TRUE;
-			iteratorPlayer = queue.iterator();
-			Player player = iteratorPlayer.next();
+		if (playerService.isGameReady()) {
+
+			renewRemoteStatus();
+
+			Player player = playerService.startGame();
 			restTemplate.getForObject(player.getUrl() + "/begin/{bound}",
 					Integer.class, LIMIT_NUMBER);
 		} else {
 			logger.info("The amount of users is not enough to start");
+			return new ResponseEntity<String>("The amount of users is not enough to start",HttpStatus.ACCEPTED);
 		}
+		
+		return new ResponseEntity<Player>(HttpStatus.NO_CONTENT);
 	}
 
 	@RequestMapping(value = "/play/{number}/player/{id}", method = RequestMethod.GET)
-	public void play(@PathVariable final int number, @PathVariable final int id) {
+	public ResponseEntity<?> play(@PathVariable final int number, @PathVariable final int id) {
 
-		if (!isGameReady()) {
+		if (!playerService.isGameReady()) {
 			logger.info("There is not sufficient players available, wait for your opponent(s)!");
-			return;
+			return new ResponseEntity<String>("There is not sufficient players available, wait for your opponent(s)!",HttpStatus.ACCEPTED);
 		}
 		logger.info("Receiving new value " + number);
-		getPlayer(id).setCurrentNumber(number);
+
+		Player player = playerService.findById(id);
+		player.setCurrentNumber(number);
+
+		// Simulate the time to view results
 		try {
 			Thread.sleep(2000);
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}
+
 		if (number == 1) {
 			declareFinalResult(id);
-
 			logger.info("Game is over!");
-			return;
+			return new ResponseEntity<String>("Game is over!",HttpStatus.ACCEPTED);
 		}
 
-		if (!iteratorPlayer.hasNext()) {
-			iteratorPlayer = queue.iterator();
-		}
+		playerService.verifyRoundFinished();
 
-		Player player = iteratorPlayer.next();
-		logger.info("Sending " + number + " to player " + player.getId());
-		restTemplate.getForObject(player.getUrl() + "/receive/{number}",
+		Player nextPlayer = playerService.retrieveNextPlayer();
+		logger.info("Sending " + number + " to player " + nextPlayer.getId());
+		restTemplate.getForObject(nextPlayer.getUrl() + "/receive/{number}",
 				Integer.class, number);
-	}
-
-	private void removePlayer(int id) {
-		Iterator<Player> itPlayer = queue.iterator();
-		while (itPlayer.hasNext()) {
-			Player player = itPlayer.next();
-			if (player.getId() == id) {
-				itPlayer.remove();
-				break;
-			}
-		}
-	}
-
-	private Player getPlayer(int id) {
-		Player retVal = null;
-		for (Player playerQueue : queue) {
-			if (playerQueue.getId() == id) {
-				retVal = playerQueue;
-				break;
-			}
-		}
-		return retVal;
+		
+		return new ResponseEntity<Player>(HttpStatus.NO_CONTENT);
 	}
 
 	private void declareFinalResult(int idWinner) {
+		List<Player> queue = playerService.findAll();
 		for (Player player : queue) {
 			if (player.getId() == idWinner) {
 				player.setStatus(Status.WINNER);
-				restTemplate.getForObject(player.getUrl() + "/finalResult/{status}",
-						Integer.class, Status.WINNER);
+				restTemplate.getForObject(player.getUrl()
+						+ "/newStatus/{status}", Integer.class, Status.WINNER);
 			} else {
 				player.setStatus(Status.LOSER);
-				restTemplate.getForObject(player.getUrl() + "/finalResult/{status}",
-						Integer.class, Status.LOSER);
+				restTemplate.getForObject(player.getUrl()
+						+ "/newStatus/{status}", Integer.class, Status.LOSER);
 			}
 		}
 	}
 
-	private boolean isGameReady() {
-		boolean retVal = false;
-		if (queue.size() >= MIN_QUANTITY_PLAYERS) {
-			retVal = true;
+	private void renewRemoteStatus() {
+		List<Player> queue = playerService.findAll();
+		for (Player player : queue) {
+			player.setStatus(Status.READY);
+			restTemplate.getForObject(player.getUrl() + "/newStatus/{status}",
+					Integer.class, Status.WINNER);
 		}
-		return retVal;
 	}
-
-	private boolean isGameFull() {
-		boolean retVal = false;
-		if (queue.size() == MAX_QUANTITY_PLAYERS) {
-			retVal = true;
-		}
-		return retVal;
-	}
+	
 }
