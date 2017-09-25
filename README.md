@@ -16,19 +16,19 @@
   
   ## Technologies
   
-    => Backend: Java, Spring-Boot, REST
-    => Frontend: Java, AngularJS, REST, FTL (freemarker)
+    Backend: Java, Spring-Boot, REST
+    Frontend: Java, AngularJS, REST, FTL (freemarker)
     
 # How to run
 
   ## Build
   
-    mvn player/pom.xml
-    mvn server/pom.xml
-    
+    mvn package
+   
   ## Run
   
     java -jar target/server.jar
+    
     java -jar target/player.jar
     java -jar target/player.jar
     
@@ -44,7 +44,6 @@
     
     * Several strategies of autonomous player
     * Show historic of games
-    * Renew a finished game
     * Permit a player disconnect and the other be called winner
     
  
