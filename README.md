@@ -42,7 +42,7 @@
     
 # API Rest
 
-    ## Server 
+   ## Server 
     
         * GET http://localhost:8080/server/api/player 
             + Return the player list
@@ -59,7 +59,7 @@
         * GET http://localhost:8080/server/api/play/{number}/player/{id}
             + Receive a number from a player to send for another player
             
-    ## Player
+   ## Player
         
          * GET http://localhost:8080/player/api/
             + Return the player values
