@@ -4,7 +4,7 @@
 
 # Architecture
 
-    There are two modules. First the serve must be started to receive players for registration. However, there is a limit of two players. It is possible to change this, to do it, you have to update the Application.properties in the server module.
+    The Architecture is based on the client-server model and there are two modules available. First the serve must be started to receive players for registration. However, there is a limit of two players. It is possible to change this, to do it, you have to update the Application.properties in the server module.
 
  ## Server
  
