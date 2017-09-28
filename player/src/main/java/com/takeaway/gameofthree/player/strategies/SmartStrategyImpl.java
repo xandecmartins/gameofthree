@@ -12,18 +12,22 @@ public class SmartStrategyImpl implements GameStrategy{
 	@Override
 	public int executeStrategy(int number) {
 		int newNumber = number;
-		if(newNumber==properties.getDivisionReference()+1){
+		
+		int rest = number % 3;
+		if(rest==1){
 			newNumber--;
-		} else if(newNumber==properties.getDivisionReference()-1){
+		} else if(newNumber==2){
 			newNumber++;	
-		} else if(newNumber!=properties.getDivisionReference()){
-			newNumber++;
-		}
+		} 
 		
 		newNumber/=properties.getDivisionReference();
 		
 		return newNumber;
 		
+	}
+	
+	public static void main(String[] args) {
+		System.out.println(new SmartStrategyImpl().executeStrategy(16));
 	}
 	
 	
