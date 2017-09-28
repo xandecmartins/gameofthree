@@ -16,7 +16,7 @@ public class SmartStrategyImpl implements GameStrategy{
 		int rest = number % 3;
 		if(rest==1){
 			newNumber--;
-		} else if(newNumber==2){
+		} else if(rest==2){
 			newNumber++;	
 		} 
 		
