@@ -25,10 +25,4 @@ public class SmartStrategyImpl implements GameStrategy{
 		return newNumber;
 		
 	}
-	
-	public static void main(String[] args) {
-		System.out.println(new SmartStrategyImpl().executeStrategy(16));
-	}
-	
-	
 }
