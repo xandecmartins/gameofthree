@@ -4,25 +4,25 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import com.takeaway.gameofthree.player.AppProperties;
 
-public class SmartStrategyImpl implements GameStrategy{
+public class SmartStrategyImpl implements GameStrategy {
 
 	@Autowired
 	private AppProperties properties;
-	
+
 	@Override
 	public int executeStrategy(int number) {
 		int newNumber = number;
-		
-		int rest = number % 3;
-		if(rest==1){
+
+		int rest = number % properties.getDivisionReference();
+		if (rest == 1) {
 			newNumber--;
-		} else if(rest==2){
-			newNumber++;	
-		} 
-		
-		newNumber/=properties.getDivisionReference();
-		
+		} else if (rest == 2) {
+			newNumber++;
+		}
+
+		newNumber /= properties.getDivisionReference();
+
 		return newNumber;
-		
+
 	}
 }
