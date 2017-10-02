@@ -37,7 +37,7 @@ angular.module('g3').factory('PlayerService',
 
             function startGame() {
                 var deferred = $q.defer();
-                $http.get('http://'+$location.host()+':'+$location.port()+'/player/api/askToStart')
+                $http.post('http://'+$location.host()+':'+$location.port()+'/player/api/start')
                     .then(
                         function (response) {
                             loadPlayer();
@@ -45,6 +45,7 @@ angular.module('g3').factory('PlayerService',
                         },
                         function (errResponse) {
                             console.error('Error while starting the game');
+                            self.errorMessage = errResponse.message;
                             deferred.reject(errResponse);
                         }
                     );
@@ -53,7 +54,7 @@ angular.module('g3').factory('PlayerService',
             
             function manualPlay(currentNumber) {
                 var deferred = $q.defer();
-                $http.get('http://'+$location.host()+':'+$location.port()+'/player/api/manualPlay/'+currentNumber)
+                $http.post('http://'+$location.host()+':'+$location.port()+'/player/api/'+currentNumber+'/manual_play/')
                     .then(
                         function (response) {
                             loadPlayer();
@@ -69,7 +70,7 @@ angular.module('g3').factory('PlayerService',
             
             function update(autonomous) {
                 var deferred = $q.defer();
-                $http.get('http://'+$location.host()+':'+$location.port()+'/player/api/update/'+autonomous)
+                $http.post('http://'+$location.host()+':'+$location.port()+'/player/api/'+autonomous+"/change")
                     .then(
                         function (response) {
                             loadPlayer();
@@ -85,7 +86,7 @@ angular.module('g3').factory('PlayerService',
             
             function startNewValue() {
                 var deferred = $q.defer();
-                $http.get('http://'+$location.host()+':'+$location.port()+'/player/api/startNewValue/')
+                $http.post('http://'+$location.host()+':'+$location.port()+'/player/api/mark_new_value/')
                     .then(
                         function (response) {
                             loadPlayer();

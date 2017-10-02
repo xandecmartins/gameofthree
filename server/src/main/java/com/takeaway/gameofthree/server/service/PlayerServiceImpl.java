@@ -7,6 +7,7 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import com.takeaway.gameofthree.domain.Player;
+import com.takeaway.gameofthree.domain.Status;
 import com.takeaway.gameofthree.server.AppProperties;
 import com.takeaway.gameofthree.util.Generator;
 
@@ -33,6 +34,13 @@ public class PlayerServiceImpl implements PlayerService {
 			player.setId(Generator.getId());
 			queue.add(player);
 		}
+		
+		if(isGameReadyToStart()){
+			for (Player storedPlayer : queue) {
+				storedPlayer.setStatus(Status.READY);
+			}
+		}
+		
 		return player;
 	}
 
@@ -46,6 +54,13 @@ public class PlayerServiceImpl implements PlayerService {
 				break;
 			}
 		}
+		
+		if(!isGameReadyToStart()){
+			for (Player storedPlayer : queue) {
+				storedPlayer.setStatus(Status.WAITING);
+			}
+		}
+		
 		return player;
 	}
 	

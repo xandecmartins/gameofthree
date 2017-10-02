@@ -35,8 +35,6 @@ public class PlayerController {
 	@Autowired
 	private RestTemplate restTemplate;
 
-	//private static String serverResponse;
-
 	private Player player;
 
 	public PlayerController() {
@@ -71,29 +69,29 @@ public class PlayerController {
 		}
 	}
 
-	@RequestMapping(value = "/manualPlay/{number}", method = RequestMethod.POST)
+	@RequestMapping(value = "/{number}/manual_play", method = RequestMethod.POST)
 	public void manualPlay(@PathVariable final int number) {
 		player.setCurrentNumber(number);
-		restTemplate.getForObject(getURLServer("/play/{number}/player/{id}"),
-				String.class, player.getCurrentNumber(), player.getId());
+		restTemplate.postForObject(getURLServer("/players/{id}/play"), player,
+				Integer.class, player.getId());
 	}
 
 	@RequestMapping(value = "/start", method = RequestMethod.POST)
 	public void startGame() {
 		logger.info("try to start new game");
-		restTemplate.getForObject(getURLServer("/start"),
-				String.class);
+		restTemplate.postForObject(getURLServer("/players/{id}/start"), player,
+				String.class, player.getId());
 	}
 
-	@RequestMapping(value = "/update/{autonomous}", method = RequestMethod.POST)
+	@RequestMapping(value = "/{autonomous}/change", method = RequestMethod.POST)
 	public void updatePlayer(@PathVariable final boolean autonomous) {
 		logger.info("updating user to autonomous " + autonomous);
 		player.setAutonomous(autonomous);
 	}
 
-	@RequestMapping(value = "/startNewValue", method = RequestMethod.POST)
+	@RequestMapping(value = "/mark_new_value", method = RequestMethod.POST)
 	public void startNewValue() {
-		logger.info("starting new value");
+		logger.info("receiving new value");
 		player.setHaveNewValue(false);
 	}
 
@@ -102,11 +100,11 @@ public class PlayerController {
 		int fisrtNumber = new Random().nextInt(bound);
 		player.setCurrentNumber(fisrtNumber);
 		logger.info("First number " + fisrtNumber);
-		restTemplate.postForObject(
-				getURLServer("/players/{id}/play"), player, Player.class, player.getId());
+		restTemplate.postForObject(getURLServer("/players/{id}/play"), player,
+				Player.class, player.getId());
 	}
 
-	@RequestMapping(value = "/disconnect", method = RequestMethod.DELETE)
+	@RequestMapping(value = "/", method = RequestMethod.DELETE)
 	public void disconect() {
 		new ThreadKiller().start();
 	}

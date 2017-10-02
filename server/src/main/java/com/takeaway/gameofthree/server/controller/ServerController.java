@@ -61,10 +61,11 @@ public class ServerController {
 		Player player = playerService.findById(id);
 		playerService.remove(id);
 
-		restTemplate.delete(player.getUrl() + "/disconnect");
+		restTemplate.delete(player.getUrl());
+		
+		sincronizePlayers();
 
-		return new ResponseEntity<String>("the player was deleted",
-				HttpStatus.NO_CONTENT);
+		return new ResponseEntity<String>(HttpStatus.ACCEPTED);
 	}
 
 	@RequestMapping(value = "/players/{id}/start", method = RequestMethod.POST)
@@ -77,7 +78,7 @@ public class ServerController {
 					HttpStatus.BAD_REQUEST);
 		}
 
-		renewRemoteStatus();
+		renewRemoteStatus(Status.PLAYING);
 
 		Player player = playerService.startGame(id);
 
@@ -105,6 +106,7 @@ public class ServerController {
 					HttpStatus.BAD_REQUEST);
 		} else {
 			playerService.add(player);
+			sincronizePlayers();
 			return new ResponseEntity<Player>(player, HttpStatus.CREATED);
 		}
 
@@ -122,7 +124,7 @@ public class ServerController {
 					HttpStatus.BAD_REQUEST);
 		}
 
-		renewRemoteStatus();
+		renewRemoteStatus(Status.PLAYING);
 
 		Player player = playerService.startGame();
 		restTemplate.getForObject(player.getUrl() + "/begin/{bound}",
@@ -170,6 +172,8 @@ public class ServerController {
 		
 		nextPlayer.setCurrentNumber(player.getCurrentNumber());
 		
+		playerService.update(nextPlayer);
+		
 		final String nextUrl = nextPlayer.getUrl();
 		
 		new Thread(){
@@ -195,11 +199,18 @@ public class ServerController {
 		}
 	}
 
-	private void renewRemoteStatus() {
+	private void renewRemoteStatus(Status status) {
 		List<Player> queue = playerService.findAll();
 		for (Player player : queue) {
-			player.setStatus(Status.READY);
+			player.setStatus(status);
 			player.setCurrentNumber(0);
+			restTemplate.postForObject(player.getUrl(), player, Player.class);
+		}
+	}
+	
+	private void sincronizePlayers() {
+		List<Player> queue = playerService.findAll();
+		for (Player player : queue) {
 			restTemplate.postForObject(player.getUrl(), player, Player.class);
 		}
 	}
