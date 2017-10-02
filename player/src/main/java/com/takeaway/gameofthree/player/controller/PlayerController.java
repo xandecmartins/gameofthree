@@ -117,6 +117,7 @@ public class PlayerController {
 		player.setIp(NetUtil.getLocalIP());
 		player.setPort(port);
 		player.setStatus(Status.WAITING);
+		player.setAutonomous(true);
 		player = restTemplate.postForObject(getURLServer("players"), player,
 				Player.class);
 		logger.info("player registred... ID: " + player.getId());

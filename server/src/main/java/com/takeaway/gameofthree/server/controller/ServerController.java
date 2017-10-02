@@ -157,8 +157,7 @@ public class ServerController {
 			playerService.setGameStarted(Boolean.FALSE);
 			declareFinalResult(id);
 			logger.info("Game is over!");
-			return new ResponseEntity<String>("Game is over!",
-					HttpStatus.ACCEPTED);
+			return new ResponseEntity<String>(HttpStatus.ACCEPTED);
 		}
 
 		Player nextPlayer = null;
@@ -174,9 +173,15 @@ public class ServerController {
 		
 		nextPlayer.setCurrentNumber(player.getCurrentNumber());
 		
-		restTemplate.postForObject(nextPlayer.getUrl()
-				+ "/receive/", player,
-				Player.class);
+		final String nextUrl = nextPlayer.getUrl();
+		
+		new Thread(){
+			public void run(){
+				restTemplate.postForObject(nextUrl
+						+ "/receive/", player,
+						Player.class);
+			}
+		}.start();
 
 		return new ResponseEntity<Void>(HttpStatus.NO_CONTENT);
 	}
@@ -197,6 +202,7 @@ public class ServerController {
 		List<Player> queue = playerService.findAll();
 		for (Player player : queue) {
 			player.setStatus(Status.READY);
+			player.setCurrentNumber(0);
 			restTemplate.postForObject(player.getUrl(), player, Player.class);
 		}
 	}
