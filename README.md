@@ -67,22 +67,22 @@
             + Receive new player to update
          * POST http://localhost:8080/player/api/{number}/receive
             + Receive a number from server to make a play
-         * POST http://localhost:8080/player/api/manualPlay/{number}
+         * POST http://localhost:8080/player/api/{number}/manual_play
             + Receive a value typed for a user (not autonomous)
-         * POST http://localhost:8080/player/api/askToStart
+         * POST http://localhost:8080/player/api/start
             + Receive from screen a requesto to start
-         * POST http://localhost:8080/player/api/update/{autonomous}
+         * POST http://localhost:8080/player/api/{autonomous}/change
             + Receive a new value to the autonomous property
-         * POST http://localhost:8080/player/api/startNewValue
+         * POST http://localhost:8080/player/api/mark_new_value
             + Receive a new value from server after marked as manual
-         * POST http://localhost:8080/player/api/begin/{bound}
+         * POST http://localhost:8080/player/api/game/{bound}/begin
             + Receive the command to random a number from server and start the game
-         * DELETE http://localhost:8080/player/api/disconnect
+         * DELETE http://localhost:8080/player/api/
             + Receive the ask to disconnect
   
 # Main Features
 
-    * Backend and Frontend implemented
+    * Backend(Spring) and Frontend(AngularJS) implemented
     * Easy Possibility to expand the game for 3 or more players, using the round-robin concept
     * Easy way to change the type of player (manual/autonomous)
     * Flexible configuration using application.properties file
