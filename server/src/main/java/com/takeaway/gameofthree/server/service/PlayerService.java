@@ -6,23 +6,25 @@ import com.takeaway.gameofthree.domain.Player;
 
 public interface PlayerService {
 
-	void add(Player player);
+	Player add(Player player);
+	
+	Player update(Player player);
 
-	void remove(int id);
+	Player remove(int id);
 
 	List<Player> findAll();
 
 	Player findById(int id);
 
-	Player adjustPositionGame(int id);
+	Player setGamePosition(int idPlayer);
 
 	Player renewRound();
 
-	void verifyRoundFinished();
+	boolean verifyRoundIsFinished();
 
-	Player retrieveNextPlayer();
+	Player getNextPlayer();
 
-	boolean isGameReady();
+	boolean isGameReadyToStart();
 
 	boolean isGameFull();
 
@@ -30,8 +32,6 @@ public interface PlayerService {
 
 	void setGameStarted(boolean gameStarted);
 
-	Player register(String ip, int port);
-	
 	Player startGame(int id);
 	
 	Player startGame();

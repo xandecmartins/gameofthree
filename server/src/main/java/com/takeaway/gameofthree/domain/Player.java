@@ -3,7 +3,7 @@ package com.takeaway.gameofthree.domain;
 public class Player {
 
 	
-	private int id;
+	private Integer id;
 	
 	private Status status;
 	
@@ -30,11 +30,11 @@ public class Player {
 	
 	}
 
-	public int getId() {
+	public Integer getId() {
 		return id;
 	}
 
-	public void setId(int id) {
+	public void setId(Integer id) {
 		this.id = id;
 	}
 
@@ -72,7 +72,7 @@ public class Player {
 	
 	public String getUrl(){
 		return "http://" + this.ip + ":"
-				+ this.port+"/player/api";
+				+ this.port+"/player/api/";
 	}
 	
 	public boolean isAutonomous() {
@@ -94,4 +94,31 @@ public class Player {
 	public void setHaveNewValue(boolean haveNewValue) {
 		this.haveNewValue = haveNewValue;
 	}
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((id == null) ? 0 : id.hashCode());
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		Player other = (Player) obj;
+		if (id == null) {
+			if (other.id != null)
+				return false;
+		} else if (!id.equals(other.id))
+			return false;
+		return true;
+	}
+	
+	
 }

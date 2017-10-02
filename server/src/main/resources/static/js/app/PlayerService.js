@@ -16,12 +16,10 @@ angular.module('g3').factory('PlayerService',
             return factory;
 
             function loadAllPlayers() {
-                console.log('Fetching all players');
                 var deferred = $q.defer();
                 $http.get(urls.PLAYER_SERVICE_API)
                     .then(
                         function (response) {
-                            console.log('Fetched successfully all players');
                             $localStorage.players = response.data;
                             deferred.resolve(response);
                         },
@@ -75,7 +73,7 @@ angular.module('g3').factory('PlayerService',
             function startGamePlayer(id) {
                 console.log('Starting game with Player with id '+id);
                 var deferred = $q.defer();
-                $http.get(urls.GAME_API + id)
+                $http.post(urls.PLAYER_SERVICE_API + id+"/start")
                     .then(
                         function (response) {
                             loadAllPlayers();
@@ -92,7 +90,7 @@ angular.module('g3').factory('PlayerService',
             function startGame() {
                 console.log('Starting game...');
                 var deferred = $q.defer();
-                $http.get(urls.GAME_API)
+                $http.post(urls.PLAYER_SERVICE_API+"/start")
                     .then(
                         function (response) {
                             loadAllPlayers();

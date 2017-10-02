@@ -44,40 +44,38 @@
 
    ## Server 
     
-        * GET http://localhost:8080/server/api/player 
+        * GET http://localhost:8080/server/api/players 
             + Return the player list
-        * GET http://localhost:8080/server/api/player/{id} 
+        * GET http://localhost:8080/server/api/players/{id} 
             + Return a player by id
-        * DELETE http://localhost:8080/server/api/player/{id}
+        * DELETE http://localhost:8080/server/api/playeris/{id}
             + Delete a player
-        * GET http://localhost:8080/server/api/start/player/{id}
+        * POST http://localhost:8080/server/api/players/{id}/start
             + Receive the ask to start a game from player
-        * GET http://localhost:8080/server/api/register/{ip}/{port}
-            + Receive the request to register a new player
-        * GET http://localhost:8080/server/api/start
+        * POST http://localhost:8080/server/api/players/{id}
+            + Receive a registred palyer to update
+        * POST http://localhost:8080/server/api/start
             + Start a new game, using the fisrt registred player to begin
-        * GET http://localhost:8080/server/api/play/{number}/player/{id}
+        * POST http://localhost:8080/server/api/players/{id}/play
             + Receive a number from a player to send for another player
             
    ## Player
         
          * GET http://localhost:8080/player/api/
-            + Return the player values
-         * GET http://localhost:8080/player/api/newStatus/{status}
-            + Receive new status from server
-         * GET http://localhost:8080/player/api/newStatus/{status}/currentNumber/{currentNumber}
-            + Receive a new status from server and a new value
-         * GET http://localhost:8080/player/api/receive/{number}
+            + Return the player
+         * POST http://localhost:8080/player/api/
+            + Receive new player to update
+         * POST http://localhost:8080/player/api/{number}/receive
             + Receive a number from server to make a play
-         * GET http://localhost:8080/player/api/manualPlay/{number}
+         * POST http://localhost:8080/player/api/manualPlay/{number}
             + Receive a value typed for a user (not autonomous)
-         * GET http://localhost:8080/player/api/askToStart
+         * POST http://localhost:8080/player/api/askToStart
             + Receive from screen a requesto to start
-         * GET http://localhost:8080/player/api/update/{autonomous}
+         * POST http://localhost:8080/player/api/update/{autonomous}
             + Receive a new value to the autonomous property
-         * GET http://localhost:8080/player/api/startNewValue
+         * POST http://localhost:8080/player/api/startNewValue
             + Receive a new value from server after marked as manual
-         * GET http://localhost:8080/player/api/begin/{bound}
+         * POST http://localhost:8080/player/api/begin/{bound}
             + Receive the command to random a number from server and start the game
          * DELETE http://localhost:8080/player/api/disconnect
             + Receive the ask to disconnect
