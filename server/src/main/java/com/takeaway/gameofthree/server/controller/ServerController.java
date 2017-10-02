@@ -7,14 +7,17 @@ import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import com.takeaway.gameofthree.domain.Player;
 import com.takeaway.gameofthree.domain.Status;
@@ -38,7 +41,7 @@ public class ServerController {
 	private PlayerService playerService;
 
 	@SuppressWarnings({ "rawtypes", "unchecked" })
-	@RequestMapping(value = "/player/", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
+	@RequestMapping(value = "/players/", method = RequestMethod.GET)
 	public ResponseEntity<List<Player>> listAllPlayers() {
 		List<Player> queue = playerService.findAll();
 		if (queue.isEmpty()) {
@@ -47,14 +50,14 @@ public class ServerController {
 		return new ResponseEntity<List<Player>>(queue, HttpStatus.OK);
 	}
 
-	@RequestMapping(value = "/player/{id}", method = RequestMethod.GET)
+	@RequestMapping(value = "/players/{id}", method = RequestMethod.GET)
 	public ResponseEntity<?> getUser(@PathVariable("id") int id) {
 		logger.info("Fetching Player with id {}", id);
 		return new ResponseEntity<Player>(playerService.findById(id),
 				HttpStatus.OK);
 	}
 
-	@RequestMapping(value = "/player/{id}", method = RequestMethod.DELETE)
+	@RequestMapping(value = "/players/{id}", method = RequestMethod.DELETE)
 	public ResponseEntity<?> deletePlayer(@PathVariable("id") int id) {
 		logger.info("Fetching & Deleting User with id {}", id);
 
@@ -67,61 +70,59 @@ public class ServerController {
 				HttpStatus.NO_CONTENT);
 	}
 
-	@RequestMapping(value = "/start/player/{id}", method = RequestMethod.GET)
-	public ResponseEntity<?> startGamePlayer(@PathVariable("id") int id) {
+	@RequestMapping(value = "/players/{id}/start", method = RequestMethod.POST)
+	public ResponseEntity<?> startGameWithPlayer(@PathVariable("id") int id) {
 		logger.info("Fetching & startingUser with id {}", id);
-
-		if (!playerService.isGameReady()) {
-
+		if (!playerService.isGameReadyToStart()) {
 			logger.info("The amount of users is not enough to start");
 			return new ResponseEntity<String>(
 					"The amount of users is not enough to start",
-					HttpStatus.UNAUTHORIZED);
-
+					HttpStatus.BAD_REQUEST);
 		}
 
 		renewRemoteStatus();
 
 		Player player = playerService.startGame(id);
 
-		restTemplate.getForObject(player.getUrl() + "/begin/{bound}",
-				Integer.class, properties.getLimitValue());
+		restTemplate.postForObject(player.getUrl() + "/game/{bound}/begin",
+				properties.getLimitValue(), Integer.class, properties.getLimitValue());
 		return new ResponseEntity<String>("The was started with sucess!",
 				HttpStatus.ACCEPTED);
 	}
 
-	@RequestMapping(value = "/register/{ip}/{port}", method = RequestMethod.GET)
-	public ResponseEntity<?> register(@PathVariable("ip") final String ip,
-			@PathVariable("port") final int port) {
-		logger.debug("Receiving new player..." + ip + " - " + port);
+	@RequestMapping(value = "/players", method = RequestMethod.POST)
+	public ResponseEntity<?> register(@RequestBody Player player) {
+		logger.debug("Receiving new player..." + player.getIp() + " - "
+				+ player.getPort());
 
 		if (playerService.isGameStarted()) {
 			HashMap<String, Object> errorResponse = new HashMap<String, Object>();
 			errorResponse.put("message",
 					"The game has started, new players are not allowed!");
 			return new ResponseEntity<Map<String, Object>>(errorResponse,
-					HttpStatus.UNAUTHORIZED);
+					HttpStatus.BAD_REQUEST);
 		} else if (playerService.isGameFull()) {
 			HashMap<String, Object> errorResponse = new HashMap<String, Object>();
 			errorResponse.put("message", "Number of players exceed");
 			return new ResponseEntity<Map<String, Object>>(errorResponse,
-					HttpStatus.UNAUTHORIZED);
+					HttpStatus.BAD_REQUEST);
 		} else {
-			return new ResponseEntity<Player>(playerService.register(ip, port),
-					HttpStatus.OK);
+			playerService.add(player);
+			return new ResponseEntity<Player>(player, HttpStatus.CREATED);
 		}
+
 	}
 
-	@RequestMapping(value = "/start", method = RequestMethod.GET)
+	@RequestMapping(value = "/game/start", method = RequestMethod.POST)
 	public ResponseEntity<?> startGame() {
 		logger.info("starting new game");
-		if (!playerService.isGameReady()) {
+		if (!playerService.isGameReadyToStart()) {
 			logger.info("The amount of users is not enough to start");
 			HashMap<String, Object> errorResponse = new HashMap<String, Object>();
 			errorResponse.put("message",
 					"The amount of users is not enough to start");
 			return new ResponseEntity<Map<String, Object>>(errorResponse,
-					HttpStatus.UNAUTHORIZED);
+					HttpStatus.BAD_REQUEST);
 		}
 
 		renewRemoteStatus();
@@ -133,43 +134,51 @@ public class ServerController {
 		return new ResponseEntity<Player>(HttpStatus.NO_CONTENT);
 	}
 
-	@RequestMapping(value = "/play/{number}/player/{id}", method = RequestMethod.GET)
-	public ResponseEntity<?> play(@PathVariable final int number,
-			@PathVariable final int id) {
+	@RequestMapping(value = "/players/{id}/play", method = RequestMethod.POST)
+	public ResponseEntity<?> play(@PathVariable final int id,
+			@RequestBody Player player) {
 
-		if (!playerService.isGameReady()) {
+		if (!playerService.isGameReadyToStart()) {
 			logger.info("There is not sufficient players available, wait for your opponent(s)!");
 			HashMap<String, Object> errorResponse = new HashMap<String, Object>();
 			errorResponse
 					.put("message",
 							"There is not sufficient players available, wait for your opponent(s)!");
 			return new ResponseEntity<Map<String, Object>>(errorResponse,
-					HttpStatus.UNAUTHORIZED);
+					HttpStatus.BAD_REQUEST);
 		}
-		logger.info("Receiving new value " + number);
-
-		Player player = playerService.findById(id);
-		player.setCurrentNumber(number);
+		logger.info("Receiving new value " + player.getCurrentNumber());
 
 		simulateDelay();
-		
-		if (number == 1) {
+
+		playerService.update(player);
+
+		if (player.getCurrentNumber() == 1) {
 			playerService.setGameStarted(Boolean.FALSE);
-			System.out.println(playerService.isGameStarted());
 			declareFinalResult(id);
 			logger.info("Game is over!");
 			return new ResponseEntity<String>("Game is over!",
 					HttpStatus.ACCEPTED);
 		}
 
-		playerService.verifyRoundFinished();
+		Player nextPlayer = null;
 
-		Player nextPlayer = playerService.retrieveNextPlayer();
-		logger.info("Sending " + number + " to player " + nextPlayer.getId());
-		restTemplate.getForObject(nextPlayer.getUrl() + "/receive/{number}",
-				Integer.class, number);
+		if (playerService.verifyRoundIsFinished()) {
+			nextPlayer = playerService.renewRound();
+		} else {
+			nextPlayer = playerService.getNextPlayer();
+		}
 
-		return new ResponseEntity<Player>(HttpStatus.NO_CONTENT);
+		logger.info("Sending " + player.getCurrentNumber() + " to player "
+				+ nextPlayer.getId());
+		
+		nextPlayer.setCurrentNumber(player.getCurrentNumber());
+		
+		restTemplate.postForObject(nextPlayer.getUrl()
+				+ "/receive/", player,
+				Player.class);
+
+		return new ResponseEntity<Void>(HttpStatus.NO_CONTENT);
 	}
 
 	private void declareFinalResult(int idWinner) {
@@ -177,13 +186,10 @@ public class ServerController {
 		for (Player player : queue) {
 			if (player.getId() == idWinner) {
 				player.setStatus(Status.WINNER);
-				restTemplate.getForObject(player.getUrl()
-						+ "/newStatus/{status}", Integer.class, Status.WINNER);
 			} else {
 				player.setStatus(Status.LOSER);
-				restTemplate.getForObject(player.getUrl()
-						+ "/newStatus/{status}", Integer.class, Status.LOSER);
 			}
+			restTemplate.postForObject(player.getUrl(), player, Player.class);
 		}
 	}
 
@@ -191,20 +197,16 @@ public class ServerController {
 		List<Player> queue = playerService.findAll();
 		for (Player player : queue) {
 			player.setStatus(Status.READY);
-			restTemplate.getForObject(player.getUrl()
-					+ "/newStatus/{status}/currentNumber/{currentNumber}",
-					Integer.class, Status.READY, 0);
+			restTemplate.postForObject(player.getUrl(), player, Player.class);
 		}
 	}
 
 	private void simulateDelay() {
-		// Simulate the time to view results
 		try {
 			Thread.sleep(properties.getPlayDelay());
 		} catch (InterruptedException e) {
 			logger.error("Eror during sleeping", e);
 		}
-
 	}
 
 }

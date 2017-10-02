@@ -28,19 +28,40 @@ public class PlayerServiceImpl implements PlayerService {
 		return queue;
 	}
 
-	public void add(Player player) {
-		queue.add(player);
+	public Player add(Player player) {
+		if(player.getId() == null){
+			player.setId(Generator.getId());
+			queue.add(player);
+		}
+		return player;
 	}
 
-	public void remove(int id) {
+	public Player remove(int id) {
 		Iterator<Player> itPlayer = queue.iterator();
+		Player player = null;
 		while (itPlayer.hasNext()) {
-			Player player = itPlayer.next();
+			player = itPlayer.next();
 			if (player.getId() == id) {
 				itPlayer.remove();
 				break;
 			}
 		}
+		return player;
+	}
+	
+	public Player update(Player player) {
+		for (Player tempPlayer : queue) {
+			if(tempPlayer.equals(player)){
+				tempPlayer.setCurrentNumber(player.getCurrentNumber());
+				tempPlayer.setAutonomous(player.isAutonomous());
+				tempPlayer.setHaveNewValue(player.isHaveNewValue());
+				tempPlayer.setIp(player.getIp());
+				tempPlayer.setPort(player.getPort());
+				tempPlayer.setStatus(player.getStatus());
+				break;
+			}
+		}
+		return player;
 	}
 
 	public Player findById(int id) {
@@ -54,12 +75,12 @@ public class PlayerServiceImpl implements PlayerService {
 		return retVal;
 	}
 
-	public Player adjustPositionGame(int id) {
+	public Player setGamePosition(int idPlayer) {
 		Player player = null;
 		iteratorGame = queue.iterator();
 		while (iteratorGame.hasNext()) {
 			player = iteratorGame.next();
-			if (player.getId() == id) {
+			if (player.getId() == idPlayer) {
 				break;
 			}
 		}
@@ -71,17 +92,15 @@ public class PlayerServiceImpl implements PlayerService {
 		return iteratorGame.next();
 	}
 
-	public void verifyRoundFinished() {
-		if (!iteratorGame.hasNext()) {
-			iteratorGame = queue.iterator();
-		}
+	public boolean verifyRoundIsFinished() {
+		return !iteratorGame.hasNext();
 	}
-
-	public Player retrieveNextPlayer() {
+	
+	public Player getNextPlayer() {
 		return iteratorGame.next();
 	}
 
-	public boolean isGameReady() {
+	public boolean isGameReadyToStart() {
 		boolean retVal = false;
 		if (queue.size() >= properties.getMinUsers()) {
 			retVal = true;
@@ -105,15 +124,9 @@ public class PlayerServiceImpl implements PlayerService {
 		this.gameStarted = gameStarted;
 	}
 
-	public Player register(String ip, int port) {
-		Player player = new Player(Generator.getId(), ip, port);
-		add(player);
-		return player;
-	}
-
-	public Player startGame(int id) {
+	public Player startGame(int idPlayer) {
 		setGameStarted(Boolean.TRUE);
-		adjustPositionGame(id);
+		setGamePosition(idPlayer);
 		return renewRound();
 
 	}

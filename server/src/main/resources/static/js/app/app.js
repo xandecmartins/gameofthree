@@ -2,8 +2,7 @@ var app = angular.module('g3',['ui.router','ngStorage']);
 
 app.constant('urls', {
     BASE: 'http://localhost:8080/server',
-    PLAYER_SERVICE_API : 'http://localhost:8080/server/api/player/',
-    GAME_API : 'http://localhost:8080/server/api/start/player/'
+    PLAYER_SERVICE_API : 'http://localhost:8080/server/api/players/'
 });
 
 app.config(['$stateProvider', '$urlRouterProvider',
