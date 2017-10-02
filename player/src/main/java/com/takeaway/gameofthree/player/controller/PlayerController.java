@@ -5,13 +5,17 @@ import java.util.Random;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
+import com.takeaway.gameofthree.domain.CustomErrorType;
 import com.takeaway.gameofthree.domain.Player;
 import com.takeaway.gameofthree.domain.Status;
 import com.takeaway.gameofthree.player.AppProperties;
@@ -51,7 +55,7 @@ public class PlayerController {
 	}
 
 	@RequestMapping(value = "/receive", method = RequestMethod.POST)
-	public void receive(@RequestBody Player player) {
+	public ResponseEntity<?> receive(@RequestBody Player player) {
 		logger.info("Receiving number " + player.getCurrentNumber());
 		this.player = player;
 		player.setHaveNewValue(true);
@@ -67,46 +71,62 @@ public class PlayerController {
 			restTemplate.postForObject(getURLServer("/players/{id}/play"),
 					player, Integer.class, player.getId());
 		}
+		return new ResponseEntity<Void>(HttpStatus.OK);
 	}
 
 	@RequestMapping(value = "/{number}/manual_play", method = RequestMethod.POST)
-	public void manualPlay(@PathVariable final int number) {
+	public ResponseEntity<?> manualPlay(@PathVariable final int number) {
+		if(player.isAutonomous()){
+			logger.error("Ilegal move, the player is configured as autonomous");
+			return new ResponseEntity<CustomErrorType>(new CustomErrorType("Ilegal move, the player is configured as autonomous"), HttpStatus.BAD_REQUEST);
+		}
 		player.setCurrentNumber(number);
 		restTemplate.postForObject(getURLServer("/players/{id}/play"), player,
 				Integer.class, player.getId());
+		return new ResponseEntity<Void>(HttpStatus.OK);
 	}
 
 	@RequestMapping(value = "/start", method = RequestMethod.POST)
-	public void startGame() {
+	public ResponseEntity<?> startGame() {
 		logger.info("try to start new game");
-		restTemplate.postForObject(getURLServer("/players/{id}/start"), player,
-				String.class, player.getId());
+		try {
+			restTemplate.postForObject(getURLServer("/players/{id}/start"),
+					player, String.class, player.getId());
+		} catch (Exception e) {
+			logger.error("Error while registring player");
+			return new ResponseEntity<CustomErrorType>(new CustomErrorType("The amount of users is not enough to start"), HttpStatus.BAD_REQUEST);
+		}
+		return new ResponseEntity<Void>(HttpStatus.OK);
 	}
 
 	@RequestMapping(value = "/{autonomous}/change", method = RequestMethod.POST)
-	public void updatePlayer(@PathVariable final boolean autonomous) {
+	public ResponseEntity<?> updatePlayer(@PathVariable final boolean autonomous) {
 		logger.info("updating user to autonomous " + autonomous);
 		player.setAutonomous(autonomous);
+		return new ResponseEntity<Void>(HttpStatus.OK);
 	}
 
 	@RequestMapping(value = "/mark_new_value", method = RequestMethod.POST)
-	public void startNewValue() {
+	public ResponseEntity<?> startNewValue() {
 		logger.info("receiving new value");
 		player.setHaveNewValue(false);
+		return new ResponseEntity<Void>(HttpStatus.OK);
 	}
 
 	@RequestMapping(value = "/game/{bound}/begin", method = RequestMethod.POST)
-	public void begin(@PathVariable final int bound) {
+	public ResponseEntity<?> begin(@PathVariable final int bound) {
 		int fisrtNumber = new Random().nextInt(bound);
 		player.setCurrentNumber(fisrtNumber);
 		logger.info("First number " + fisrtNumber);
 		restTemplate.postForObject(getURLServer("/players/{id}/play"), player,
 				Player.class, player.getId());
+		return new ResponseEntity<Void>(HttpStatus.OK);
 	}
 
 	@RequestMapping(value = "/", method = RequestMethod.DELETE)
-	public void disconect() {
+	public ResponseEntity<?> disconect() {
 		new ThreadKiller().start();
+		return new ResponseEntity<Void>(HttpStatus.OK);
 	}
 
 	public void registerPlayer(int port) {
@@ -115,9 +135,15 @@ public class PlayerController {
 		player.setPort(port);
 		player.setStatus(Status.WAITING);
 		player.setAutonomous(true);
-		player = restTemplate.postForObject(getURLServer("players"), player,
-				Player.class);
-		logger.info("player registred... ID: " + player.getId());
+		try {
+			player = restTemplate.postForObject(getURLServer("players"),
+					player, Player.class);
+			logger.info("player registred... ID: " + player.getId());
+		} catch (Exception e) {
+			logger.error("Error while registring player");
+			new ThreadKiller().start();
+		}
+
 	}
 
 	public String getURLServer() {

@@ -1,8 +1,6 @@
 package com.takeaway.gameofthree.server.controller;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestTemplate;
 
+import com.takeaway.gameofthree.domain.CustomErrorType;
 import com.takeaway.gameofthree.domain.Player;
 import com.takeaway.gameofthree.domain.Status;
 import com.takeaway.gameofthree.server.AppProperties;
@@ -73,9 +72,7 @@ public class ServerController {
 		logger.info("Fetching & startingUser with id {}", id);
 		if (!playerService.isGameReadyToStart()) {
 			logger.info("The amount of users is not enough to start");
-			return new ResponseEntity<String>(
-					"The amount of users is not enough to start",
-					HttpStatus.BAD_REQUEST);
+			return new ResponseEntity<CustomErrorType>(new CustomErrorType("The amount of users is not enough to start"), HttpStatus.BAD_REQUEST);
 		}
 
 		renewRemoteStatus(Status.PLAYING);
@@ -94,16 +91,9 @@ public class ServerController {
 				+ player.getPort());
 
 		if (playerService.isGameStarted()) {
-			HashMap<String, Object> errorResponse = new HashMap<String, Object>();
-			errorResponse.put("message",
-					"The game has started, new players are not allowed!");
-			return new ResponseEntity<Map<String, Object>>(errorResponse,
-					HttpStatus.BAD_REQUEST);
+			return new ResponseEntity<CustomErrorType>(new CustomErrorType("The game has started, new players are not allowed!"), HttpStatus.BAD_REQUEST);
 		} else if (playerService.isGameFull()) {
-			HashMap<String, Object> errorResponse = new HashMap<String, Object>();
-			errorResponse.put("message", "Number of players exceed");
-			return new ResponseEntity<Map<String, Object>>(errorResponse,
-					HttpStatus.BAD_REQUEST);
+			return new ResponseEntity<CustomErrorType>(new CustomErrorType("Number of players exceed, Only "+properties.getMaxUsers()+" users are allowed!"), HttpStatus.CONFLICT);
 		} else {
 			playerService.add(player);
 			sincronizePlayers();
@@ -117,11 +107,7 @@ public class ServerController {
 		logger.info("starting new game");
 		if (!playerService.isGameReadyToStart()) {
 			logger.info("The amount of users is not enough to start");
-			HashMap<String, Object> errorResponse = new HashMap<String, Object>();
-			errorResponse.put("message",
-					"The amount of users is not enough to start");
-			return new ResponseEntity<Map<String, Object>>(errorResponse,
-					HttpStatus.BAD_REQUEST);
+			return new ResponseEntity<CustomErrorType>(new CustomErrorType("The amount of users is not enough to start"), HttpStatus.BAD_REQUEST);
 		}
 
 		renewRemoteStatus(Status.PLAYING);
@@ -139,12 +125,8 @@ public class ServerController {
 
 		if (!playerService.isGameReadyToStart()) {
 			logger.info("There is not sufficient players available, wait for your opponent(s)!");
-			HashMap<String, Object> errorResponse = new HashMap<String, Object>();
-			errorResponse
-					.put("message",
-							"There is not sufficient players available, wait for your opponent(s)!");
-			return new ResponseEntity<Map<String, Object>>(errorResponse,
-					HttpStatus.BAD_REQUEST);
+			return new ResponseEntity<CustomErrorType>(new CustomErrorType("There is not sufficient players available, wait for your opponent(s)!"), HttpStatus.BAD_REQUEST);
+			
 		}
 		logger.info("Receiving new value " + player.getCurrentNumber());
 

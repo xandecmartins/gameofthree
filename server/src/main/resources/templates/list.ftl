@@ -1,8 +1,11 @@
 <div class="generic-container">
     <div class="panel panel-default">
         <!-- Default panel contents -->
-        <div class="panel-heading"><span class="lead">List of Players </span></div>
+        <div class="panel-heading"><span class="lead">List of Players</span></div>
 		<div class="panel-body">
+			
+			<div class="alert alert-success" role="alert" ng-if="ctrl.successMessage">{{ctrl.successMessage}}</div>
+	        <div class="alert alert-danger" role="alert" ng-if="ctrl.errorMessage">{{ctrl.errorMessage}}</div>
 			<div class="table-responsive">
 		        <table class="table table-hover">
 		            <thead>
