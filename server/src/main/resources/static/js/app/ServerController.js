@@ -79,10 +79,11 @@ angular.module('g3').controller('ServerController',
         }
         
         $scope.reload = function () {
+        	reset();
         	PlayerService.loadAllPlayers();
          };
         $scope.reload();
-        $interval($scope.reload, 500);
+        $interval($scope.reload, 1000);
     }
 
     ]);
