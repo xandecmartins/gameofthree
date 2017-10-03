@@ -8,7 +8,7 @@ public class CustomSuccessType {
 		this.successMessage = successMessage;
 	}
 
-	public String getErrorMessage() {
+	public String getSuccessMessage() {
 		return successMessage;
 	}
 

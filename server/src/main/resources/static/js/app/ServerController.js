@@ -24,8 +24,9 @@ angular.module('g3').controller('ServerController',
         	console.log('About to remove Player with id '+id);
             PlayerService.removePlayer(id)
                 .then(
-                    function(){
-                        console.log('Player '+id + ' removed successfully');
+                    function(response){
+                        console.log('Player '+id + ' removed successfully ');
+                        self.successMessage = response.successMessage;
                     },
                     function(errResponse){
                     	if ('data' in errResponse){
@@ -45,9 +46,9 @@ angular.module('g3').controller('ServerController',
         	console.log('About to start game to Player with id '+id);
             PlayerService.startGamePlayer(id)
                 .then(
-                    function(sucResponse){
+                    function(response){
                         console.log('Player '+id + ' started successfully');
-                        self.successMessage = sucResponse.data.successMessage;
+                        self.successMessage = response.successMessage;
                     },
                     function(errResponse){
                     	if ('data' in errResponse){
