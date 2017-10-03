@@ -36,4 +36,6 @@ public interface PlayerService {
 	
 	Player startGame();
 	
+	boolean isRegistred(Player player);
+	
 }

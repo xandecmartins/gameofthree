@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
+import javax.annotation.PostConstruct;
+
 import org.springframework.beans.factory.annotation.Autowired;
 
 import com.takeaway.gameofthree.domain.Player;
@@ -22,7 +24,13 @@ public class PlayerServiceImpl implements PlayerService {
 	private Iterator<Player> iteratorGame;
 
 	public PlayerServiceImpl() {
+		
+	}
+	
+	@PostConstruct
+	private void init(){
 		queue = new ArrayList<>();
+		
 	}
 
 	public List<Player> findAll() {
@@ -42,6 +50,10 @@ public class PlayerServiceImpl implements PlayerService {
 		}
 		
 		return player;
+	}
+	
+	public boolean isRegistred(Player player){
+		return queue.contains(player);
 	}
 
 	public Player remove(int id) {

@@ -54,9 +54,10 @@ public class PlayerController {
 	}
 
 	@RequestMapping(value = "/receive", method = RequestMethod.POST)
-	public ResponseEntity<?> receive(@RequestBody Player player) {
-		logger.info("Receiving number " + player.getCurrentNumber());
-		this.player = player;
+	public ResponseEntity<?> receive(@RequestBody Player playerRemote) {
+		logger.info("Receiving number " + playerRemote.getCurrentNumber());
+		player.setCurrentNumber(playerRemote.getCurrentNumber());
+		player.setStatus(playerRemote.getStatus());
 		player.setHaveNewValue(true);
 		if (player.isAutonomous()) {
 			int newNumber = strategy.executeStrategy(player.getCurrentNumber());
@@ -67,8 +68,12 @@ public class PlayerController {
 				logger.info("I won");
 			}
 
-			restTemplate.postForObject(getURLServer("/players/{id}/play"),
-					player, Integer.class, player.getId());
+			new Thread(){
+				public void run(){
+					restTemplate.postForObject(getURLServer("/players/{id}/play"),
+							player, Player.class, player.getId());
+				}
+			}.start();
 		}
 		return new ResponseEntity<Void>(HttpStatus.OK);
 	}
@@ -80,8 +85,14 @@ public class PlayerController {
 			return new ResponseEntity<CustomErrorType>(new CustomErrorType("Ilegal move, the player is configured as autonomous"), HttpStatus.BAD_REQUEST);
 		}
 		player.setCurrentNumber(number);
-		restTemplate.postForObject(getURLServer("/players/{id}/play"), player,
-				Integer.class, player.getId());
+		
+		new Thread(){
+			public void run(){
+				restTemplate.postForObject(getURLServer("/players/{id}/play"), player,
+						Player.class, player.getId());
+			}
+		}.start();
+		
 		return new ResponseEntity<Void>(HttpStatus.OK);
 	}
 
@@ -100,8 +111,10 @@ public class PlayerController {
 
 	@RequestMapping(value = "/{autonomous}/change", method = RequestMethod.POST)
 	public ResponseEntity<?> updatePlayer(@PathVariable final boolean autonomous) {
-		logger.info("updating user to autonomous " + autonomous);
+		logger.info("switching user to autonomous " + autonomous);
 		player.setAutonomous(autonomous);
+		restTemplate.put(getURLServer("players/{id}"),
+				player,player.getId());
 		return new ResponseEntity<Void>(HttpStatus.OK);
 	}
 
@@ -117,8 +130,13 @@ public class PlayerController {
 		int fisrtNumber = new Random().nextInt(bound);
 		player.setCurrentNumber(fisrtNumber);
 		logger.info("First number " + fisrtNumber);
-		restTemplate.postForObject(getURLServer("/players/{id}/play"), player,
-				Player.class, player.getId());
+		new Thread(){
+			public void run(){
+				restTemplate.postForObject(getURLServer("/players/{id}/play"), player,
+						Player.class, player.getId());
+			}
+		}.start();
+		
 		return new ResponseEntity<Void>(HttpStatus.OK);
 	}
 

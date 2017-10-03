@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestTemplate;
 
 import com.takeaway.gameofthree.domain.CustomErrorType;
+import com.takeaway.gameofthree.domain.CustomSuccessType;
 import com.takeaway.gameofthree.domain.Player;
 import com.takeaway.gameofthree.domain.Status;
 import com.takeaway.gameofthree.server.AppProperties;
@@ -61,10 +62,10 @@ public class ServerController {
 		playerService.remove(id);
 
 		restTemplate.delete(player.getUrl());
-		
+
 		sincronizePlayers();
 
-		return new ResponseEntity<String>(HttpStatus.ACCEPTED);
+		return new ResponseEntity<CustomSuccessType>(new CustomSuccessType("Player has been deleted!"),HttpStatus.ACCEPTED);
 	}
 
 	@RequestMapping(value = "/players/{id}/start", method = RequestMethod.POST)
@@ -72,17 +73,33 @@ public class ServerController {
 		logger.info("Fetching & startingUser with id {}", id);
 		if (!playerService.isGameReadyToStart()) {
 			logger.info("The amount of users is not enough to start");
-			return new ResponseEntity<CustomErrorType>(new CustomErrorType("The amount of users is not enough to start"), HttpStatus.BAD_REQUEST);
+			return new ResponseEntity<CustomErrorType>(new CustomErrorType(
+					"The amount of users is not enough to start"),
+					HttpStatus.BAD_REQUEST);
 		}
 
 		renewRemoteStatus(Status.PLAYING);
 
 		Player player = playerService.startGame(id);
 
-		restTemplate.postForObject(player.getUrl() + "/game/{bound}/begin",
-				properties.getLimitValue(), Integer.class, properties.getLimitValue());
-		return new ResponseEntity<String>("The was started with sucess!",
-				HttpStatus.ACCEPTED);
+		new Thread(){
+			public void run(){
+				restTemplate.postForObject(player.getUrl() + "/game/{bound}/begin",
+						properties.getLimitValue(), Integer.class,
+						properties.getLimitValue());
+			}
+		}.start();
+
+		return new ResponseEntity<CustomSuccessType>(new CustomSuccessType("Game started!"), HttpStatus.ACCEPTED);
+	}
+
+	@RequestMapping(value = "/players/{id}", method = RequestMethod.PUT)
+	public ResponseEntity<?> update(@RequestBody Player player,
+			@PathVariable("id") int id) {
+		logger.debug("Updating player..." + player.getId() + " - "
+				+ player.getAutonomous());
+		playerService.update(player);
+		return new ResponseEntity<CustomSuccessType>(new CustomSuccessType("Player has been updated!"),HttpStatus.ACCEPTED);
 	}
 
 	@RequestMapping(value = "/players", method = RequestMethod.POST)
@@ -91,15 +108,19 @@ public class ServerController {
 				+ player.getPort());
 
 		if (playerService.isGameStarted()) {
-			return new ResponseEntity<CustomErrorType>(new CustomErrorType("The game has started, new players are not allowed!"), HttpStatus.BAD_REQUEST);
+			return new ResponseEntity<CustomErrorType>(new CustomErrorType(
+					"The game has started, new players are not allowed!"),
+					HttpStatus.BAD_REQUEST);
 		} else if (playerService.isGameFull()) {
-			return new ResponseEntity<CustomErrorType>(new CustomErrorType("Number of players exceed, Only "+properties.getMaxUsers()+" users are allowed!"), HttpStatus.CONFLICT);
+			return new ResponseEntity<CustomErrorType>(
+					new CustomErrorType("Number of players exceed, Only "
+							+ properties.getMaxUsers() + " users are allowed!"),
+					HttpStatus.CONFLICT);
 		} else {
 			playerService.add(player);
 			sincronizePlayers();
-			return new ResponseEntity<Player>(player, HttpStatus.CREATED);
 		}
-
+		return new ResponseEntity<Player>(player, HttpStatus.CREATED);
 	}
 
 	@RequestMapping(value = "/game/start", method = RequestMethod.POST)
@@ -107,7 +128,9 @@ public class ServerController {
 		logger.info("starting new game");
 		if (!playerService.isGameReadyToStart()) {
 			logger.info("The amount of users is not enough to start");
-			return new ResponseEntity<CustomErrorType>(new CustomErrorType("The amount of users is not enough to start"), HttpStatus.BAD_REQUEST);
+			return new ResponseEntity<CustomErrorType>(new CustomErrorType(
+					"The amount of users is not enough to start"),
+					HttpStatus.BAD_REQUEST);
 		}
 
 		renewRemoteStatus(Status.PLAYING);
@@ -116,7 +139,7 @@ public class ServerController {
 		restTemplate.getForObject(player.getUrl() + "/begin/{bound}",
 				Integer.class, properties.getLimitValue());
 
-		return new ResponseEntity<Player>(HttpStatus.NO_CONTENT);
+		return new ResponseEntity<CustomSuccessType>(new CustomSuccessType("Game started!"), HttpStatus.ACCEPTED);
 	}
 
 	@RequestMapping(value = "/players/{id}/play", method = RequestMethod.POST)
@@ -125,20 +148,31 @@ public class ServerController {
 
 		if (!playerService.isGameReadyToStart()) {
 			logger.info("There is not sufficient players available, wait for your opponent(s)!");
-			return new ResponseEntity<CustomErrorType>(new CustomErrorType("There is not sufficient players available, wait for your opponent(s)!"), HttpStatus.BAD_REQUEST);
-			
-		}
-		logger.info("Receiving new value " + player.getCurrentNumber());
+			return new ResponseEntity<CustomErrorType>(
+					new CustomErrorType(
+							"There is not sufficient players available, wait for your opponent(s)!"),
+					HttpStatus.BAD_REQUEST);
 
-		simulateDelay();
+		}
+
+		if (!playerService.isGameStarted()) {
+			logger.info("Illegal move, you cannot play without the ask to start!");
+			return new ResponseEntity<CustomErrorType>(new CustomErrorType(
+					"Illegal move, you cannot play without the ask to start!"),
+					HttpStatus.BAD_REQUEST);
+		}
+
+		logger.info("Receiving new value " + player.getCurrentNumber() + " from player "+ player.getId());
 
 		playerService.update(player);
+		
+		simulateDelay();
 
 		if (player.getCurrentNumber() == 1) {
 			playerService.setGameStarted(Boolean.FALSE);
 			declareFinalResult(id);
-			logger.info("Game is over!");
-			return new ResponseEntity<String>(HttpStatus.ACCEPTED);
+			logger.info("Game is Over, Player "+player.getId()+" wins!");
+			return new ResponseEntity<CustomSuccessType>(new CustomSuccessType("Game is Over, Player "+player.getId()+" wins!"),HttpStatus.ACCEPTED);
 		}
 
 		Player nextPlayer = null;
@@ -150,23 +184,21 @@ public class ServerController {
 		}
 
 		logger.info("Sending " + player.getCurrentNumber() + " to player "
-				+ nextPlayer.getId());
-		
+				+ nextPlayer.getId()+ " from player "+player.getId());
+
 		nextPlayer.setCurrentNumber(player.getCurrentNumber());
-		
+
 		playerService.update(nextPlayer);
-		
+
 		final String nextUrl = nextPlayer.getUrl();
 		
 		new Thread(){
 			public void run(){
-				restTemplate.postForObject(nextUrl
-						+ "/receive/", player,
-						Player.class);
+				restTemplate.postForObject(nextUrl + "/receive/", player, Player.class);
 			}
 		}.start();
 
-		return new ResponseEntity<Void>(HttpStatus.NO_CONTENT);
+		return new ResponseEntity<CustomSuccessType>(new CustomSuccessType("Player "+player.getId()+" has sent the value "+player.getCurrentNumber()+" for Player "+nextPlayer.getId()), HttpStatus.ACCEPTED);
 	}
 
 	private void declareFinalResult(int idWinner) {
@@ -189,7 +221,7 @@ public class ServerController {
 			restTemplate.postForObject(player.getUrl(), player, Player.class);
 		}
 	}
-	
+
 	private void sincronizePlayers() {
 		List<Player> queue = playerService.findAll();
 		for (Player player : queue) {

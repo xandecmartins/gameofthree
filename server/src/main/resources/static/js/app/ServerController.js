@@ -28,8 +28,14 @@ angular.module('g3').controller('ServerController',
                         console.log('Player '+id + ' removed successfully');
                     },
                     function(errResponse){
-                        console.error('Error while removing player '+id +', Error :'+errResponse.data.errorMessage);
-                    }
+                    	if ('data' in errResponse){
+                    		console.error('Error while removing player '+id +', Error :'+errResponse.data.errorMessage);
+                    		self.errorMessage =  errResponse.data.errorMessage;
+                    	} else {
+                    		
+                    		console.error('Error while removing player '+id);
+                    	}
+        			}
                 );
         }
         
@@ -39,12 +45,19 @@ angular.module('g3').controller('ServerController',
         	console.log('About to start game to Player with id '+id);
             PlayerService.startGamePlayer(id)
                 .then(
-                    function(){
+                    function(sucResponse){
                         console.log('Player '+id + ' started successfully');
+                        self.successMessage = sucResponse.data.successMessage;
                     },
                     function(errResponse){
-                        console.error('Error while starting player '+id +', Error :'+errResponse.data.errorMessage);
-                        self.errorMessage =  errResponse.data.errorMessage;
+                    	if ('data' in errResponse){
+                    	 	console.error('Error while starting player '+id +', Error :'+errResponse.data.errorMessage);
+                    	 	self.errorMessage =  errResponse.data.errorMessage;
+	                	} else {
+	                		console.error('Error while starting player '+id);
+	                	}
+                       
+                       
                     }
                 );
         }
