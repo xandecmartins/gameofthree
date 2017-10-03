@@ -67,32 +67,42 @@ public class PlayerController {
 			if (newNumber == properties.getValueToWin()) {
 				logger.info("I won");
 			}
-
-			new Thread(){
-				public void run(){
-					restTemplate.postForObject(getURLServer("/players/{id}/play"),
-							player, Player.class, player.getId());
-				}
-			}.start();
+			restTemplate.postForObject(
+					getURLServer("/players/{id}/play"), player,
+					Player.class, player.getId());
+//			new Thread() {
+//				public void run() {
+//					restTemplate.postForObject(
+//							getURLServer("/players/{id}/play"), player,
+//							Player.class, player.getId());
+//				}
+//			}.start();
 		}
 		return new ResponseEntity<Void>(HttpStatus.OK);
 	}
 
 	@RequestMapping(value = "/{number}/manual_play", method = RequestMethod.POST)
 	public ResponseEntity<?> manualPlay(@PathVariable final int number) {
-		if(player.isAutonomous()){
+		if (player.isAutonomous()) {
 			logger.error("Ilegal move, the player is configured as autonomous");
-			return new ResponseEntity<CustomErrorType>(new CustomErrorType("Ilegal move, the player is configured as autonomous"), HttpStatus.BAD_REQUEST);
+			return new ResponseEntity<CustomErrorType>(new CustomErrorType(
+					"Ilegal move, the player is configured as autonomous"),
+					HttpStatus.BAD_REQUEST);
 		}
 		player.setCurrentNumber(number);
-		
-		new Thread(){
-			public void run(){
-				restTemplate.postForObject(getURLServer("/players/{id}/play"), player,
-						Player.class, player.getId());
+
+		new Thread() {
+			public void run() {
+				try {
+					restTemplate.postForObject(
+							getURLServer("/players/{id}/play"), player,
+							Player.class, player.getId());
+				} catch (Exception e) {
+
+				}
 			}
 		}.start();
-		
+
 		return new ResponseEntity<Void>(HttpStatus.OK);
 	}
 
@@ -104,7 +114,9 @@ public class PlayerController {
 					player, String.class, player.getId());
 		} catch (Exception e) {
 			logger.error("Error while registring player");
-			return new ResponseEntity<CustomErrorType>(new CustomErrorType("The amount of users is not enough to start"), HttpStatus.BAD_REQUEST);
+			return new ResponseEntity<CustomErrorType>(new CustomErrorType(
+					"The amount of users is not enough to start"),
+					HttpStatus.BAD_REQUEST);
 		}
 		return new ResponseEntity<Void>(HttpStatus.OK);
 	}
@@ -113,8 +125,7 @@ public class PlayerController {
 	public ResponseEntity<?> updatePlayer(@PathVariable final boolean autonomous) {
 		logger.info("switching user to autonomous " + autonomous);
 		player.setAutonomous(autonomous);
-		restTemplate.put(getURLServer("players/{id}"),
-				player,player.getId());
+		restTemplate.put(getURLServer("players/{id}"), player, player.getId());
 		return new ResponseEntity<Void>(HttpStatus.OK);
 	}
 
@@ -130,13 +141,13 @@ public class PlayerController {
 		int fisrtNumber = new Random().nextInt(bound);
 		player.setCurrentNumber(fisrtNumber);
 		logger.info("First number " + fisrtNumber);
-		new Thread(){
-			public void run(){
-				restTemplate.postForObject(getURLServer("/players/{id}/play"), player,
-						Player.class, player.getId());
+		new Thread() {
+			public void run() {
+				restTemplate.postForObject(getURLServer("/players/{id}/play"),
+						player, Player.class, player.getId());
 			}
 		}.start();
-		
+
 		return new ResponseEntity<Void>(HttpStatus.OK);
 	}
 
@@ -157,7 +168,7 @@ public class PlayerController {
 					player, Player.class);
 			logger.info("player registred... ID: " + player.getId());
 		} catch (Exception e) {
-			logger.error("Error while registring player");
+			logger.error("Error while registring player", e);
 			new ThreadKiller().start();
 		}
 

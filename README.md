@@ -48,7 +48,7 @@
             + Return the player list
         * GET http://localhost:8080/server/api/players/{id} 
             + Return a player by id
-        * DELETE http://localhost:8080/server/api/playeris/{id}
+        * DELETE http://localhost:8080/server/api/players/{id}
             + Delete a player
         * POST http://localhost:8080/server/api/players/{id}/start
             + Receive the ask to start a game from player
@@ -58,6 +58,8 @@
             + Start a new game, using the fisrt registred player to begin
         * POST http://localhost:8080/server/api/players/{id}/play
             + Receive a number from a player to send for another player
+        * PUT http://localhost:8080/server/api/players/{id}
+        	 + Receive a new player to update
             
    ## Player
         
@@ -86,8 +88,3 @@
     * Easy Possibility to expand the game for 3 or more players, using the round-robin concept
     * Easy way to change the type of player (manual/autonomous)
     * Flexible configuration using application.properties file
-    
-# Features Not Implemented
-    
-    * Show historic of games
-    * Permit a player disconnect and the other be called winner

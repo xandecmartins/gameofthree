@@ -146,16 +146,18 @@ public class ServerController {
 	public ResponseEntity<?> play(@PathVariable final int id,
 			@RequestBody Player player) {
 
-		if (!playerService.isGameReadyToStart()) {
+		if (player.getCurrentNumber()<1) {
+			return new ResponseEntity<CustomErrorType>(new CustomErrorType(
+					"The number is invalid, please choose another one"),
+					HttpStatus.BAD_REQUEST);
+		} else if (!playerService.isGameReadyToStart()) {
 			logger.info("There is not sufficient players available, wait for your opponent(s)!");
 			return new ResponseEntity<CustomErrorType>(
 					new CustomErrorType(
 							"There is not sufficient players available, wait for your opponent(s)!"),
 					HttpStatus.BAD_REQUEST);
 
-		}
-
-		if (!playerService.isGameStarted()) {
+		} else if (!playerService.isGameStarted()) {
 			logger.info("Illegal move, you cannot play without the ask to start!");
 			return new ResponseEntity<CustomErrorType>(new CustomErrorType(
 					"Illegal move, you cannot play without the ask to start!"),
