@@ -15,6 +15,7 @@
 		                <th>Current Number</th>
 		                <th>IP</th>
 		                <th>PORT</th>
+		                <th>Type</th>
 		                <th>LINK</th>
 		                <th width="100"></th>
 		                <th width="100"></th>
@@ -27,6 +28,7 @@
 		                <td>{{u.currentNumber}}</td>
 		                <td>{{u.ip}}</td>
 		                <td>{{u.port}}</td>
+		                <td>{{u.type}}</td>
 		                <td><a href="http://{{u.ip}}:{{u.port}}/player/" target="_blank"/>Link</a></td>
 		                <td><button type="button" ng-click="ctrl.removePlayer(u.id)" class="btn btn-danger custom-width">Remove</button></td>
 		                <td><button type="button" ng-click="ctrl.startGamePlayer(u.id)" class="btn btn-danger custom-width">Start</button></td>

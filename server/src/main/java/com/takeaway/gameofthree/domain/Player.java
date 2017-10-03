@@ -94,6 +94,10 @@ public class Player {
 	public void setHaveNewValue(boolean haveNewValue) {
 		this.haveNewValue = haveNewValue;
 	}
+	
+	public String getType(){
+		return autonomous?"Autonomous":"Manual";
+	}
 
 	@Override
 	public int hashCode() {

@@ -67,16 +67,14 @@ public class PlayerController {
 			if (newNumber == properties.getValueToWin()) {
 				logger.info("I won");
 			}
-			restTemplate.postForObject(
-					getURLServer("/players/{id}/play"), player,
-					Player.class, player.getId());
-//			new Thread() {
-//				public void run() {
-//					restTemplate.postForObject(
-//							getURLServer("/players/{id}/play"), player,
-//							Player.class, player.getId());
-//				}
-//			}.start();
+
+			new Thread() {
+				public void run() {
+					restTemplate.postForObject(
+							getURLServer("/players/{id}/play"), player,
+							Player.class, player.getId());
+				}
+			}.start();
 		}
 		return new ResponseEntity<Void>(HttpStatus.OK);
 	}
@@ -88,18 +86,19 @@ public class PlayerController {
 			return new ResponseEntity<CustomErrorType>(new CustomErrorType(
 					"Ilegal move, the player is configured as autonomous"),
 					HttpStatus.BAD_REQUEST);
+		} else if (number < 1) {
+			logger.error("The value " + number
+					+ "is invalid, choose another one");
+			return new ResponseEntity<CustomErrorType>(new CustomErrorType(
+					"The valeu " + number + " is invalid, choose another one"),
+					HttpStatus.BAD_REQUEST);
 		}
 		player.setCurrentNumber(number);
 
 		new Thread() {
 			public void run() {
-				try {
-					restTemplate.postForObject(
-							getURLServer("/players/{id}/play"), player,
-							Player.class, player.getId());
-				} catch (Exception e) {
-
-				}
+				restTemplate.postForObject(getURLServer("/players/{id}/play"),
+						player, Player.class, player.getId());
 			}
 		}.start();
 

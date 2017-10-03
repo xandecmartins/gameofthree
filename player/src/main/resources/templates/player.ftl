@@ -27,7 +27,7 @@
 	                    <div class="form-group col-md-12">
 	                        <label class="col-md-2 control-lable" for="currentNumber">Current Number</label>
 	                        <div class="col-md-7">
-	                            <input type="text" ng-model="ctrl.player.currentNumber" id="currentNumber" class="form-control input-sm" required ng-pattern="ctrl.onlyNumbers"/>
+	                            <input type="text" ng-model="ctrl.player.currentNumber" id="currentNumber" class="form-control input-sm" required/>
 	                        </div>
 	                    </div>
 	                </div>
