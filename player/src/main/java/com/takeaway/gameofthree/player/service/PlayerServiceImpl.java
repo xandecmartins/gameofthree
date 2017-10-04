@@ -2,9 +2,11 @@ package com.takeaway.gameofthree.player.service;
 
 import java.util.Random;
 
+import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
 import com.takeaway.gameofthree.domain.Player;
@@ -114,9 +116,10 @@ public class PlayerServiceImpl implements PlayerService {
 			player = restTemplate.postForObject(getURLServer("players"),
 					player, Player.class);
 			logger.info("player registred... ID: " + player.getId());
-		} catch (Exception e) {
-			logger.error("Error while registring player", e);
+		} catch (HttpClientErrorException e) {
+			logger.error("Error while registring player: "+new JSONObject(e.getResponseBodyAsString()).get("errorMessage"));
 			new ThreadKiller(1000).start();
+			
 		}
 
 	}
