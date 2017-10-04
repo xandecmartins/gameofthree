@@ -5,19 +5,18 @@ import org.springframework.boot.context.embedded.EmbeddedServletContainerInitial
 import org.springframework.context.ApplicationListener;
 import org.springframework.stereotype.Component;
 
-import com.takeaway.gameofthree.player.controller.PlayerController;
+import com.takeaway.gameofthree.player.service.PlayerService;
 
 @Component
 public class PlayerListener implements
 		ApplicationListener<EmbeddedServletContainerInitializedEvent> {
 
 	@Autowired
-	private PlayerController playerController;
+	private PlayerService playerService;
 	
 	@Override
 	public void onApplicationEvent(
 			final EmbeddedServletContainerInitializedEvent event) {
-		int port = event.getEmbeddedServletContainer().getPort();
-		playerController.registerPlayer(port);
+		playerService.register(event.getEmbeddedServletContainer().getPort());
 	}
 }

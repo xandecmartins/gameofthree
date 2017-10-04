@@ -86,24 +86,6 @@ angular.module('g3').factory('PlayerService',
                     );
                 return deferred.promise;
             }
-            
-            function startGame() {
-                console.log('Starting game...');
-                var deferred = $q.defer();
-                $http.post(urls.PLAYER_SERVICE_API+"/start")
-                    .then(
-                        function (response) {
-                            loadAllPlayers();
-                            deferred.resolve(response.data);
-                        },
-                        function (errResponse) {
-                            console.error('Error while starting the game');
-                            deferred.reject(errResponse);
-                        }
-                    );
-                return deferred.promise;
-            }
-            
            
         }
     ]);

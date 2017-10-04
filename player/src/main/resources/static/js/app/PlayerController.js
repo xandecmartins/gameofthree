@@ -39,7 +39,7 @@ angular
 								PlayerService
 										.startGame()
 										.then(
-												function() {
+												function(response) {
 													console
 															.log('Player started successfully');
 												},
@@ -58,7 +58,7 @@ angular
 								PlayerService
 										.manualPlay(self.player.currentNumber)
 										.then(
-												function() {
+												function(response) {
 													console
 															.log('Player started successfully');
 												},

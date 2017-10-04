@@ -67,12 +67,7 @@ angular.module('g3').controller('ServerController',
         function getAllPlayers(){
             return PlayerService.getAllPlayers();
         }
-        
-        function startGame(){
-        	reset();
-        	return PlayerService.startGame();
-        }
-        
+              
         function reset(){
             self.successMessage='';
             self.errorMessage='';

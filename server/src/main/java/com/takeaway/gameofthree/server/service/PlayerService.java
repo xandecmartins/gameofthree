@@ -3,39 +3,22 @@ package com.takeaway.gameofthree.server.service;
 import java.util.List;
 
 import com.takeaway.gameofthree.domain.Player;
+import com.takeaway.gameofthree.server.exception.GameException;
 
 public interface PlayerService {
 
-	Player add(Player player);
-	
+	Player add(Player player) throws GameException;
+
 	Player update(Player player);
 
-	Player remove(int id);
+	void remove(Player player);
 
 	List<Player> findAll();
 
 	Player findById(int id);
 
-	Player setGamePosition(int idPlayer);
+	void startGame(int id) throws GameException;
 
-	Player renewRound();
+	void play(Player player) throws GameException;
 
-	boolean verifyRoundIsFinished();
-
-	Player getNextPlayer();
-
-	boolean isGameReadyToStart();
-
-	boolean isGameFull();
-
-	boolean isGameStarted();
-
-	void setGameStarted(boolean gameStarted);
-
-	Player startGame(int id);
-	
-	Player startGame();
-	
-	boolean isRegistred(Player player);
-	
 }

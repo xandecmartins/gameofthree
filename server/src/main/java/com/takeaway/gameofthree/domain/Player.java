@@ -20,6 +20,10 @@ public class Player {
 	public Player() {
 	}
 	
+	public Player(int id) {
+		this.id = id;
+	}
+	
 	public Player(int id, String ip, int port) {
 		this.id = id;
 		this.status = Status.READY;
